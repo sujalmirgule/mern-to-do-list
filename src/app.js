@@ -47,5 +47,26 @@ app.delete("/tasks/:id", async (req, res) => {
 
 });
 
+app.patch("/tasks/:id", async (req, res) => {
+
+    const id = req.params.id;
+    const data = req.body;
+
+    await taskModel.findOneAndUpdate(
+        {
+            _id: id
+        },
+        {
+            title: data.title,
+            description: data.description
+        }
+    );
+
+    res.status(200).json({
+        message: "Task updated successfully"
+    });
+
+});
+
 
 module.exports = app;
