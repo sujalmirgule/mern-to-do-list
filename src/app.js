@@ -1,8 +1,10 @@
 const express = require("express");
+const cors = require("cors");
 const taskModel = require("./model/task.model");
 
 const app = express();
 
+app.use(cors());
 app.use(express.json());
 
 
@@ -68,5 +70,21 @@ app.patch("/tasks/:id", async (req, res) => {
 
 });
 
+
+app.patch("/tasks/:id/complete", async (req, res) => {
+
+    const id = req.params.id;
+
+    const task = await taskModel.findById(id);
+
+    task.completed = !task.completed;
+
+    await task.save();
+
+    res.status(200).json({
+        message: "Task status updated successfully"
+    });
+
+});
 
 module.exports = app;

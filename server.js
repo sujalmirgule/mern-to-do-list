@@ -1,8 +1,16 @@
+require("dotenv").config();
+
 const app = require("./src/app");
 const connectDB = require("./src/db/db");
 
-connectDB();
+async function startServer() {
 
-app.listen(5000, () => {
-    console.log("Server is listening on 5000");
-});
+    await connectDB();
+
+    app.listen(5000, () => {
+        console.log("Server is listening on 5000");
+    });
+
+}
+
+startServer();

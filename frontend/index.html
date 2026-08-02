@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Todo List</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" />
+
+<style>
+  :root {
+    --bg-1: #ffe8e0;
+    --bg-2: #e2ecff;
+    --card: #ffffff;
+    --ink: #171b21;
+    --muted: #6b7280;
+    --faint: #9aa0ab;
+    --line: #e8e9ee;
+    --accent: #6d5ef2;
+    --accent-soft: #efecfe;
+    --success: #16a34a;
+    --success-soft: #e9f8ef;
+    --warning: #d97706;
+    --warning-soft: #fdf3e5;
+    --danger: #dc2626;
+    --danger-soft: #fdecec;
+
+    /* category colors */
+    --cat-work: #3b82f6;
+    --cat-work-soft: #e8f0fe;
+    --cat-personal: #ec4899;
+    --cat-personal-soft: #fdeaf3;
+    --cat-health: #10b981;
+    --cat-health-soft: #e6f9f2;
+    --cat-learning: #f59e0b;
+    --cat-learning-soft: #fef4e2;
+    --cat-urgent: #ef4444;
+    --cat-urgent-soft: #feeaea;
+
+    --radius-lg: 20px;
+    --radius-md: 12px;
+    --radius-sm: 9px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 16px;
+    background: radial-gradient(circle at 15% 10%, var(--bg-1) 0%, transparent 45%),
+                radial-gradient(circle at 85% 90%, var(--bg-2) 0%, transparent 45%),
+                #f4f5f9;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: var(--ink);
+  }
+
+  .app-card {
+    width: 100%;
+    max-width: 540px;
+    background: var(--card);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 1px 2px rgba(20,24,36,0.04), 0 20px 40px -16px rgba(20,24,36,0.14);
+    padding: 32px 32px 28px;
+    border: 1px solid rgba(20,24,36,0.04);
+  }
+
+  /* Header */
+  .app-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .app-title {
+    font-family: 'Sora', sans-serif;
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+  }
+
+  .app-subtitle {
+    margin-top: 4px;
+    font-size: 13.5px;
+    color: var(--muted);
+  }
+
+  .progress-ring-wrap {
+    position: relative;
+    width: 56px;
+    height: 56px;
+    flex-shrink: 0;
+  }
+
+  .progress-ring-wrap svg { transform: rotate(-90deg); }
+
+  .ring-track { fill: none; stroke: var(--line); stroke-width: 5; }
+  .ring-fill {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 5;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.4s ease;
+  }
+
+  .ring-label {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--ink);
+  }
+
+  /* Filter tabs */
+  .filter-tabs {
+    display: flex;
+    gap: 4px;
+    background: #f4f5f8;
+    padding: 4px;
+    border-radius: var(--radius-sm);
+    margin-bottom: 20px;
+  }
+
+  .filter-tab {
+    flex: 1;
+    padding: 8px 0;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+    background: transparent;
+    border: none;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+    font-family: inherit;
+  }
+
+  .filter-tab.active {
+    background: var(--accent-soft);
+    color: var(--accent);
+    box-shadow: 0 1px 2px rgba(20,24,36,0.06);
+  }
+
+  .filter-tab[data-filter="active"].active {
+    background: #e5f0ff;
+    color: #2563eb;
+  }
+
+  .filter-tab[data-filter="completed"].active {
+    background: var(--success-soft);
+    color: var(--success);
+  }
+
+  .filter-tab:hover:not(.active) { color: var(--ink); }
+
+  /* Input row */
+  .task-form {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+
+  .task-input {
+    flex: 1;
+    padding: 12px 14px;
+    font-size: 14px;
+    font-family: inherit;
+    color: var(--ink);
+    background: #f9fafb;
+    border: 1.5px solid var(--line);
+    border-radius: var(--radius-sm);
+    outline: none;
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+
+  .task-input::placeholder { color: var(--faint); }
+
+  .task-input:focus {
+    border-color: var(--accent);
+    background: #ffffff;
+  }
+
+  .btn-add {
+    padding: 12px 22px;
+    background: linear-gradient(135deg, #7c6ef5 0%, #6d5ef2 45%, #5a4ee0 100%);
+    color: #ffffff;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 14px;
+    white-space: nowrap;
+    cursor: pointer;
+    box-shadow: 0 6px 16px -6px rgba(109, 94, 242, 0.55);
+    transition: box-shadow 0.15s ease, transform 0.1s ease;
+  }
+
+  .btn-add:hover { box-shadow: 0 8px 20px -6px rgba(109, 94, 242, 0.65); }
+  .btn-add:active { transform: scale(0.98); }
+
+  /* Task list */
+  .task-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .task-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 14px 14px 16px;
+    background: #f7f9ff;
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--accent);
+    border-radius: var(--radius-md);
+    transition: box-shadow 0.15s ease, transform 0.15s ease, background 0.15s ease;
+  }
+
+  .task-card:hover {
+    box-shadow: 0 4px 14px -6px rgba(20,24,36,0.14);
+    transform: translateY(-1px);
+  }
+
+  .task-card.completed {
+    border-left-color: var(--success);
+    background: #f2fbf6;
+    border-color: #dcf1e4;
+  }
+
+  .task-card.cat-work { border-left-color: var(--cat-work); }
+  .task-card.cat-personal { border-left-color: var(--cat-personal); }
+  .task-card.cat-health { border-left-color: var(--cat-health); }
+  .task-card.cat-learning { border-left-color: var(--cat-learning); }
+  .task-card.cat-urgent { border-left-color: var(--cat-urgent); }
+
+  .task-info { flex: 1; min-width: 0; }
+
+  .task-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14.5px;
+    font-weight: 600;
+    color: var(--ink);
+    word-break: break-word;
+  }
+
+  .cat-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 9px;
+    border-radius: 999px;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    flex-shrink: 0;
+  }
+
+  .cat-badge.cat-work { background: var(--cat-work-soft); color: var(--cat-work); }
+  .cat-badge.cat-personal { background: var(--cat-personal-soft); color: var(--cat-personal); }
+  .cat-badge.cat-health { background: var(--cat-health-soft); color: var(--cat-health); }
+  .cat-badge.cat-learning { background: var(--cat-learning-soft); color: var(--cat-learning); }
+  .cat-badge.cat-urgent { background: var(--cat-urgent-soft); color: var(--cat-urgent); }
+
+  .check-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--success);
+    color: #fff;
+    font-size: 10px;
+    flex-shrink: 0;
+  }
+
+  .task-date {
+    margin-top: 4px;
+    font-size: 12px;
+    color: var(--faint);
+  }
+
+  .task-card.completed .task-title {
+    text-decoration: line-through;
+    color: var(--faint);
+    font-weight: 500;
+  }
+
+  .task-card.completed .task-date { color: #c2c6cf; }
+
+  /* Actions */
+  .task-actions {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border: none;
+    border-radius: 9px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.15s ease, color 0.15s ease, width 0.15s ease;
+  }
+
+  .complete-btn { background: var(--success-soft); color: var(--success); }
+  .complete-btn:hover:not(:disabled) { background: var(--success); color: #fff; }
+  .complete-btn:disabled {
+    background: transparent;
+    color: var(--success);
+    cursor: default;
+    width: auto;
+    padding: 0 8px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .update-btn { background: var(--warning-soft); color: var(--warning); }
+  .update-btn:hover { background: var(--warning); color: #fff; }
+
+  .delete-btn { background: var(--danger-soft); color: var(--danger); }
+  .delete-btn:hover { background: var(--danger); color: #fff; }
+
+  /* State panels */
+  .state-panel {
+    text-align: center;
+    padding: 48px 16px 32px;
+  }
+
+  .state-icon {
+    width: 44px;
+    height: 44px;
+    margin: 0 auto 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: 20px;
+  }
+
+  .state-error .state-icon { background: var(--danger-soft); color: var(--danger); }
+
+  .state-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 4px;
+  }
+
+  .state-text { font-size: 13px; color: var(--faint); }
+
+  .spinner {
+    width: 24px;
+    height: 24px;
+    margin: 0 auto 14px;
+    border: 3px solid var(--line);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  @media (max-width: 480px) {
+    .app-card { padding: 24px 20px; }
+    .task-form { flex-direction: column; }
+    .btn-add { width: 100%; }
+    .task-card { flex-wrap: wrap; }
+  }
+</style>
+</head>
+<body>
+
+  <main class="app-card">
+
+    <!-- HEADER -->
+    <header class="app-header">
+
+      <div>
+        <h1 class="app-title">Todo List</h1>
+        <p class="app-subtitle">Manage your daily tasks</p>
+      </div>
+
+      <div class="progress-ring-wrap" title="Task progress">
+
+        <svg width="56" height="56" viewBox="0 0 56 56">
+
+          <defs>
+            <linearGradient id="ringGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#7c6ef5" />
+              <stop offset="100%" stop-color="#ec4899" />
+            </linearGradient>
+          </defs>
+
+          <circle
+            class="ring-track"
+            cx="28"
+            cy="28"
+            r="24"
+          />
+
+          <circle
+            class="ring-fill"
+            cx="28"
+            cy="28"
+            r="24"
+            stroke="url(#ringGradient)"
+            stroke-dasharray="150.8"
+            stroke-dashoffset="150.8"
+          />
+
+        </svg>
+
+        <span class="ring-label">0/0</span>
+
+      </div>
+
+    </header>
+
+
+    <!-- FILTER TABS -->
+    <div class="filter-tabs">
+
+      <button
+        class="filter-tab active"
+        data-filter="all"
+        onclick="filterTasks('all')"
+      >
+        All
+      </button>
+
+      <button
+        class="filter-tab"
+        data-filter="active"
+        onclick="filterTasks('active')"
+      >
+        Active
+      </button>
+
+      <button
+        class="filter-tab"
+        data-filter="completed"
+        onclick="filterTasks('completed')"
+      >
+        Completed
+      </button>
+
+    </div>
+
+
+    <!-- ADD TASK -->
+    <form class="task-form" onsubmit="return false;">
+
+      <input
+        type="text"
+        id="taskInput"
+        class="task-input"
+        placeholder="Enter a new task..."
+        autocomplete="off"
+      />
+
+      <button
+        type="button"
+        class="btn-add"
+        onclick="addTask()"
+      >
+        Add Task
+      </button>
+
+    </form>
+
+
+    <!-- TASKS WILL COME FROM MONGODB LATER -->
+    <section
+      class="task-list"
+      id="taskList"
+      aria-live="polite"
+    >
+    </section>
+
+    <!-- TASK LIST -->
+    <section id="taskList"></section>
+
+    <!-- EMPTY STATE -->
+    <section
+      class="state-panel state-empty"
+      id="emptyState"
+    >
+
+      <div class="state-icon">
+        🚀
+      </div>
+
+      <p class="state-title">
+        No tasks yet.
+      </p>
+
+      <p class="state-text">
+        Add your first task 🚀
+      </p>
+
+    </section>
+
+
+    <!-- LOADING STATE -->
+    <section
+      class="state-panel state-loading"
+      id="loadingState"
+      hidden
+    >
+
+      <span
+        class="spinner"
+        aria-hidden="true"
+      ></span>
+
+      <p class="state-text">
+        Loading tasks...
+      </p>
+
+    </section>
+
+
+    <!-- ERROR STATE -->
+    <section
+      class="state-panel state-error"
+      id="errorState"
+      hidden
+    >
+
+      <div class="state-icon">
+        !
+      </div>
+
+      <p class="state-title">
+        Something went wrong.
+      </p>
+
+      <p class="state-text">
+        Please try again in a moment.
+      </p>
+
+    </section>
+
+  </main>
+
+
+<script>
+
+const API_URL = "http://localhost:5000/tasks";
+
+let allTasks = [];
+let currentFilter = "all";
+
+
+// ========================================
+// ADD TASK
+// ========================================
+
+async function addTask() {
+
+    const input = document.getElementById("taskInput");
+    const task = input.value.trim();
+
+    if (task === "") {
+        alert("Please enter a task");
+        return;
+    }
+
+    try {
+
+        const response = await fetch(API_URL, {
+            method: "POST",
+
+            headers: {
+                "Content-Type": "application/json"
+            },
+
+            body: JSON.stringify({
+                title: task,
+                description: ""
+            })
+        });
+
+        const data = await response.json();
+
+        console.log("Task created:", data);
+
+        input.value = "";
+
+        await getTasks();
+
+    } catch (error) {
+
+        console.log("ADD TASK ERROR:", error);
+
+    }
+}
+
+
+// ========================================
+// GET ALL TASKS
+// ========================================
+
+async function getTasks() {
+
+    try {
+
+        const response = await fetch(API_URL);
+
+        const data = await response.json();
+
+        console.log("Backend response:", data);
+
+        allTasks = data.tasks;
+
+        showCurrentFilter();
+
+    } catch (error) {
+
+        console.log("GET TASK ERROR:", error);
+
+    }
+}
+
+
+// ========================================
+// RENDER TASKS
+// ========================================
+
+function renderTasks(tasks) {
+
+    const taskList = document.getElementById("taskList");
+    const emptyState = document.getElementById("emptyState");
+
+    taskList.innerHTML = "";
+
+    if (!tasks || tasks.length === 0) {
+
+        emptyState.style.display = "block";
+
+        return;
+    }
+
+    emptyState.style.display = "none";
+
+
+    tasks.forEach((task) => {
+
+        const taskDiv = document.createElement("div");
+
+        taskDiv.innerHTML = `
+
+            <div class="task-card ${task.completed ? "completed" : ""}">
+
+                <div class="task-info">
+
+                    <div class="task-title">
+
+                        ${task.completed
+                            ? '<span class="check-icon">✓</span>'
+                            : ''
+                        }
+
+                        <span>${task.title}</span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="task-actions">
+
+                    ${
+                        task.completed
+                        ?
+                        `
+                        <button
+                            class="icon-btn complete-btn"
+                            disabled
+                        >
+                            Completed
+                        </button>
+                        `
+                        :
+                        `
+                        <button
+                            class="icon-btn complete-btn"
+                            onclick="completeTask('${task._id}')"
+                            title="Complete"
+                        >
+                            ✓
+                        </button>
+                        `
+                    }
+
+
+                    <button
+                        class="icon-btn update-btn"
+                        onclick="updateTask('${task._id}', '${task.title}')"
+                        title="Update"
+                    >
+                        ✏
+                    </button>
+
+
+                    <button
+                        class="icon-btn delete-btn"
+                        onclick="deleteTask('${task._id}')"
+                        title="Delete"
+                    >
+                        🗑
+                    </button>
+
+                </div>
+
+            </div>
+
+        `;
+
+        taskList.appendChild(taskDiv);
+
+    });
+
+}
+
+
+// ========================================
+// DELETE TASK
+// ========================================
+
+async function deleteTask(id) {
+
+    try {
+
+        const response = await fetch(`${API_URL}/${id}`, {
+            method: "DELETE"
+        });
+
+        const data = await response.json();
+
+        console.log("Delete response:", data);
+
+        await getTasks();
+
+    } catch (error) {
+
+        console.log("DELETE TASK ERROR:", error);
+
+    }
+}
+
+
+// ========================================
+// UPDATE TASK
+// ========================================
+
+async function updateTask(id, oldTitle) {
+
+    const newTitle = prompt("Update task:", oldTitle);
+
+    if (newTitle === null || newTitle.trim() === "") {
+        return;
+    }
+
+    try {
+
+        const response = await fetch(`${API_URL}/${id}`, {
+
+            method: "PATCH",
+
+            headers: {
+                "Content-Type": "application/json"
+            },
+
+            body: JSON.stringify({
+                title: newTitle.trim(),
+                description: ""
+            })
+
+        });
+
+        const data = await response.json();
+
+        console.log("Update response:", data);
+
+        await getTasks();
+
+    } catch (error) {
+
+        console.log("UPDATE TASK ERROR:", error);
+
+    }
+}
+
+
+// ========================================
+// COMPLETE TASK
+// ========================================
+
+async function completeTask(id) {
+
+    try {
+
+        const response = await fetch(
+            `${API_URL}/${id}/complete`,
+            {
+                method: "PATCH"
+            }
+        );
+
+        const data = await response.json();
+
+        console.log("Complete response:", data);
+
+        // Complete hone ke baad Completed tab kholo
+        currentFilter = "completed";
+
+        updateActiveTab();
+
+        await getTasks();
+
+    } catch (error) {
+
+        console.log("COMPLETE TASK ERROR:", error);
+
+    }
+}
+
+
+// ========================================
+// FILTER TASKS
+// ========================================
+
+function filterTasks(type) {
+
+    currentFilter = type;
+
+    updateActiveTab();
+
+    showCurrentFilter();
+
+}
+
+
+// ========================================
+// SHOW CURRENT FILTER
+// ========================================
+
+function showCurrentFilter() {
+
+    if (currentFilter === "active") {
+
+        const activeTasks = allTasks.filter(
+            task => task.completed === false
+        );
+
+        renderTasks(activeTasks);
+
+    }
+
+    else if (currentFilter === "completed") {
+
+        const completedTasks = allTasks.filter(
+            task => task.completed === true
+        );
+
+        renderTasks(completedTasks);
+
+    }
+
+    else {
+
+        renderTasks(allTasks);
+
+    }
+}
+
+
+// ========================================
+// CHANGE ACTIVE TAB STYLE
+// ========================================
+
+function updateActiveTab() {
+
+    const tabs = document.querySelectorAll(".filter-tab");
+
+    tabs.forEach((tab) => {
+
+        tab.classList.remove("active");
+
+        if (tab.dataset.filter === currentFilter) {
+            tab.classList.add("active");
+        }
+
+    });
+}
+
+
+// ========================================
+// PAGE LOAD
+// ========================================
+
+getTasks();
+
+</script>
+</body>
+</html>
