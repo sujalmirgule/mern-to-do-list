@@ -33,6 +33,19 @@ app.get("/tasks", async (req, res) => {
 
 });
 
+app.delete("/tasks/:id", async (req, res) => {
+
+    const id = req.params.id;
+
+    await taskModel.findOneAndDelete({
+        _id: id
+    });
+
+    res.status(200).json({
+        message: "Task deleted successfully"
+    });
+
+});
 
 
 module.exports = app;
