@@ -386,6 +386,100 @@
     .btn-add { width: 100%; }
     .task-card { flex-wrap: wrap; }
   }
+
+
+  /* ==============================
+   UPDATE MODAL
+============================== */
+
+.update-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(20, 24, 36, 0.35);
+
+    display: none;
+    align-items: center;
+    justify-content: center;
+
+    padding: 20px;
+    z-index: 1000;
+}
+
+.update-modal-box {
+    width: 100%;
+    max-width: 400px;
+
+    background: white;
+    padding: 26px;
+
+    border-radius: 16px;
+
+    box-shadow: 0 20px 50px rgba(20, 24, 36, 0.18);
+}
+
+.update-modal-box h2 {
+    font-family: 'Sora', sans-serif;
+    font-size: 20px;
+    color: #171b21;
+    margin-bottom: 5px;
+}
+
+.update-modal-box p {
+    font-size: 13px;
+    color: #6b7280;
+    margin-bottom: 20px;
+}
+
+#updateTaskInput {
+    width: 100%;
+
+    padding: 12px 14px;
+
+    border: 1.5px solid #e8e9ee;
+    border-radius: 9px;
+
+    font-family: inherit;
+    font-size: 14px;
+
+    outline: none;
+
+    margin-bottom: 20px;
+}
+
+#updateTaskInput:focus {
+    border-color: #6d5ef2;
+}
+
+.update-modal-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.cancel-update-btn,
+.save-update-btn {
+    padding: 10px 18px;
+
+    border: none;
+    border-radius: 8px;
+
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+
+    cursor: pointer;
+}
+
+.cancel-update-btn {
+    background: #f1f2f5;
+    color: #555b66;
+}
+
+.save-update-btn {
+    background: #6d5ef2;
+    color: white;
+}
+
 </style>
 </head>
 <body>
@@ -562,6 +656,42 @@
     </section>
 
   </main>
+
+  <!-- UPDATE TASK MODAL -->
+<div id="updateModal" class="update-modal">
+
+    <div class="update-modal-box">
+
+        <h2>Update Task</h2>
+        <p>Edit your task below</p>
+
+        <input
+            type="text"
+            id="updateTaskInput"
+            placeholder="Enter updated task..."
+        >
+
+        <div class="update-modal-buttons">
+
+            <button
+                class="cancel-update-btn"
+                onclick="closeUpdateModal()"
+            >
+                Cancel
+            </button>
+
+            <button
+                class="save-update-btn"
+                onclick="saveUpdatedTask()"
+            >
+                Update
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
 
 
 <script>
@@ -774,40 +904,83 @@ async function deleteTask(id) {
 // UPDATE TASK
 // ========================================
 
-async function updateTask(id, oldTitle) {
+let taskToUpdate = null;
 
-    const newTitle = prompt("Update task:", oldTitle);
 
-    if (newTitle === null || newTitle.trim() === "") {
+// ========================================
+// OPEN UPDATE MODAL
+// ========================================
+
+function updateTask(id, oldTitle) {
+
+    taskToUpdate = id;
+
+    const modal = document.getElementById("updateModal");
+    const input = document.getElementById("updateTaskInput");
+
+    input.value = oldTitle;
+
+    modal.style.display = "flex";
+
+    input.focus();
+}
+
+
+// ========================================
+// CLOSE UPDATE MODAL
+// ========================================
+
+function closeUpdateModal() {
+
+    document.getElementById("updateModal").style.display = "none";
+
+    taskToUpdate = null;
+}
+
+
+// ========================================
+// SAVE UPDATED TASK
+// ========================================
+
+async function saveUpdatedTask() {
+
+    const input = document.getElementById("updateTaskInput");
+
+    const newTitle = input.value.trim();
+
+    if (newTitle === "") {
         return;
     }
 
     try {
 
-        const response = await fetch(`${API_URL}/${id}`, {
+        const response = await fetch(
+            `http://localhost:5000/tasks/${taskToUpdate}`,
+            {
+                method: "PATCH",
 
-            method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json"
+                },
 
-            headers: {
-                "Content-Type": "application/json"
-            },
-
-            body: JSON.stringify({
-                title: newTitle.trim(),
-                description: ""
-            })
-
-        });
+                body: JSON.stringify({
+                    title: newTitle,
+                    description: ""
+                })
+            }
+        );
 
         const data = await response.json();
 
         console.log("Update response:", data);
 
+        closeUpdateModal();
+
         await getTasks();
 
     } catch (error) {
 
-        console.log("UPDATE TASK ERROR:", error);
+        console.log("UPDATE ERROR:", error);
 
     }
 }
