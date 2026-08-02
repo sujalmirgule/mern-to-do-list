@@ -1,0 +1,25 @@
+const express = require("express");
+const taskModel = require("./model/task.model");
+
+const app = express();
+
+app.use(express.json());
+
+
+app.post("/tasks", async (req, res) => {
+
+    const data = req.body;
+
+    await taskModel.create({
+        title: data.title,
+        description: data.description
+    });
+
+    res.status(201).json({
+        message: "Task created successfully"
+    });
+
+});
+
+
+module.exports = app;
