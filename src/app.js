@@ -22,4 +22,17 @@ app.post("/tasks", async (req, res) => {
 });
 
 
+app.get("/tasks", async (req, res) => {
+
+    const tasks = await taskModel.find();
+
+    res.status(200).json({
+        message: "Tasks fetched successfully",
+        tasks: tasks
+    });
+
+});
+
+
+
 module.exports = app;
